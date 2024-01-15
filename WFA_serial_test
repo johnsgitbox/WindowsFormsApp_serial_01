@@ -1,0 +1,124 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO.Ports; // 시리얼통신을 위해 추가
+
+namespace WindowsFormsApp4
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+
+            // 사용가능한 포트를 검색해서 콤보박스에 미리 입력
+            string[] PortNames = SerialPort.GetPortNames();
+
+            if (PortNames.Length > 0)  
+            {
+                foreach (string portNumber in PortNames)
+                {
+                    Port_Combobox.Items.Add(portNumber);
+                }
+            }
+            else
+            {
+                Port_Combobox.Items.Add("사용가능한 포트가 없습니다.");
+            }
+        }
+
+        private void btnOpen_Click(object sender, EventArgs e)
+        {
+            // 포트가 열리지 않았다면 연결하기
+            if (serialPort1.IsOpen == false)
+            {
+                // 연결할 포트를 선택했다면                
+                if (Port_Combobox.SelectedItem != null)
+                {
+                    serialPort1.PortName = Port_Combobox.SelectedItem.ToString();
+                    serialPort1.Open();
+                    label2.Text = serialPort1.PortName + " 포트에 연결했습니다.";
+                }
+                else
+                {
+                    // 콤보박스에서 선택하지 않고 연결을 시도하면
+                    MessageBox.Show("연결할 포트를 선택하세요."); 
+                }
+            }
+            else
+            {
+                MessageBox.Show("이미 연결되어 있습니다.");
+            }
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen == true)
+            {
+                serialPort1.Close();
+                label2.Text = serialPort1.PortName + " 연결이 끊어졌습니다.";
+            } 
+            else
+            {
+                MessageBox.Show("연결상태가 아닙니다.");
+            }
+        }
+
+        private void serialPort1_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            //string input = serialPort1.ReadLine();
+            string input = serialPort1.ReadExisting();
+
+            // 캐리지리턴과 라인피드 제거가 필요한 경우
+            //input = input.Replace("\r", string.Empty).Replace("\n", string.Empty);
+
+            textBox1.Text += input;
+        }
+
+        // 스크롤 자동으로 내린다
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            textBox1.SelectionStart = textBox1.TextLength;
+            textBox1.ScrollToCaret();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // 포트가 열려있다면
+            if (serialPort1.IsOpen == true)
+            {
+                // 송신할 내용이 있다면
+                if (textBox2.Text.Length > 0)
+                {
+                    serialPort1.WriteLine(textBox2.Text);
+                }
+                else
+                {
+                    MessageBox.Show("송신할 내용을 입력하세요");
+                }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if(serialPort1.IsOpen == true)
+            {
+                serialPort1.WriteLine("ON");
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if(serialPort1.IsOpen == true)
+            {
+                serialPort1.WriteLine("OFF");
+            }
+        }
+    }
+}
